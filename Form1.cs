@@ -398,7 +398,7 @@ namespace tCamView
                 "Published under the GNU GPLv3 license.\n" +
                 "(For details, see license.txt)\n" +
                 "--------------------------------\n" +
-                "Credits:\nAForge.NET http://www.aforgenet.com/"
+                "Credits:\nAForge.NET https://github.com/andrewkirillov/AForge.NET"
                 );
         }
 
