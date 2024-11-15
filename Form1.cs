@@ -429,36 +429,28 @@ namespace tCamView
         private Rectangle GetCropRectangle(Bitmap frame)
         {
             cropSize = Math.Max(0, Math.Min(cropSize, Math.Min(frame.Width / 2, frame.Height / 2)));
-
             float ratio = (float)frame.Height / frame.Width;
-
             int vcropSize = (int)(cropSize * ratio);
+            var finalRect = new Rectangle(cropSize, vcropSize,frame.Width - 2 * cropSize, frame.Height - 2 * vcropSize);
 
-            if (pictureBox1.SizeMode == PictureBoxSizeMode.StretchImage && stretchKeepAspectRatio)
+            if (pictureBox1.SizeMode == PictureBoxSizeMode.StretchImage && stretchKeepAspectRatio == true)
             {
                 float ratioImage = (float)frame.Width / frame.Height;
                 float ratioPictureBox = (float)pictureBox1.ClientSize.Width / pictureBox1.ClientSize.Height;
-
                 if (ratioImage >= ratioPictureBox)
                 {
-                    int newWidth = (int)(frame.Height * ratioPictureBox);
-                    int wcrop = (frame.Width - newWidth) / 2;
-                    return new Rectangle(wcrop, 0, frame.Width - 2 * wcrop, frame.Height);
+                    int newWidth = (int)(finalRect.Height * ratioPictureBox);
+                    int wcrop = (int)((finalRect.Width - newWidth) / 2);
+                    finalRect = new Rectangle(finalRect.X + wcrop, finalRect.Y, newWidth, finalRect.Height);
                 }
                 else
                 {
-                    int newHeight = (int)(frame.Width / ratioPictureBox);
-                    int hcrop = (frame.Height - newHeight) / 2;
-                    return new Rectangle(0, hcrop, frame.Width, frame.Height - 2 * hcrop);
+                    int newHeight = (int)(finalRect.Width / ratioPictureBox);
+                    int hcrop = (int)((finalRect.Height - newHeight) / 2);
+                    finalRect = new Rectangle(finalRect.X, finalRect.Y + hcrop, finalRect.Width, newHeight);
                 }
             }
-            
-            if (pictureBox1.SizeMode == PictureBoxSizeMode.CenterImage && cropSize != 0)
-            {
-                return new Rectangle(cropSize, vcropSize, frame.Width - 2 * cropSize, frame.Height - 2 * vcropSize);
-            }
-
-            return new Rectangle(cropSize, vcropSize, frame.Width - 2 * cropSize, frame.Height - 2 * vcropSize);
+            return finalRect;
         }
 
        
