@@ -52,7 +52,7 @@ You can display your webcam video on top of the computer screen with the followi
 Right-click to display the menu 
 ![menu](https://github.com/augamvio/tCamView/raw/main/image5.jpg)  
 
-or press the Hotkey (see ![ShortCut.txt](https://github.com/augamvio/tCamView/raw/main/ShortCut.txt) ).
+or press the Hotkey (see [ShortCut.txt](https://github.com/augamvio/tCamView/raw/main/ShortCut.txt) ).
 
 - Note on camera selection and video resolution selection
   * Select the camera by right-clicking and selecting the "Video Capture Device" menu.
