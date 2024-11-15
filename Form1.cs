@@ -156,8 +156,8 @@ namespace tCamView
             }
 
             // Update the Checked mark...
-            UpdateMenuItemsChecked();
             LoadSettings();
+            UpdateMenuItemsChecked();
             // Always on Top
             this.TopMost = true;
         }
