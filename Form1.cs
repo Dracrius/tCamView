@@ -426,74 +426,81 @@ namespace tCamView
         // [test] additioal feature: frame skipping to reduce CPU usage
         //int frame_number_mod = -1;
 
+        private Rectangle GetCropRectangle(Bitmap frame)
+        {
+            cropSize = Math.Max(0, Math.Min(cropSize, Math.Min(frame.Width / 2, frame.Height / 2)));
+
+            float ratio = (float)frame.Height / frame.Width;
+
+            int vcropSize = (int)(cropSize * ratio);
+
+            if (pictureBox1.SizeMode == PictureBoxSizeMode.StretchImage && stretchKeepAspectRatio)
+            {
+                float ratioImage = (float)frame.Width / frame.Height;
+                float ratioPictureBox = (float)pictureBox1.ClientSize.Width / pictureBox1.ClientSize.Height;
+
+                if (ratioImage >= ratioPictureBox)
+                {
+                    int newWidth = (int)(frame.Height * ratioPictureBox);
+                    int wcrop = (frame.Width - newWidth) / 2;
+                    return new Rectangle(wcrop, 0, frame.Width - 2 * wcrop, frame.Height);
+                }
+                else
+                {
+                    int newHeight = (int)(frame.Width / ratioPictureBox);
+                    int hcrop = (frame.Height - newHeight) / 2;
+                    return new Rectangle(0, hcrop, frame.Width, frame.Height - 2 * hcrop);
+                }
+            }
+            
+            if (pictureBox1.SizeMode == PictureBoxSizeMode.CenterImage && cropSize != 0)
+            {
+                return new Rectangle(cropSize, vcropSize, frame.Width - 2 * cropSize, frame.Height - 2 * vcropSize);
+            }
+
+            return new Rectangle(cropSize, vcropSize, frame.Width - 2 * cropSize, frame.Height - 2 * vcropSize);
+        }
+
+       
+        private RotateFlipType GetFlipType()
+        {
+            if (state_flip_horizontal && state_flip_vertical) return RotateFlipType.RotateNoneFlipXY;
+            if (state_flip_horizontal) return RotateFlipType.RotateNoneFlipX;
+            if (state_flip_vertical) return RotateFlipType.RotateNoneFlipY;
+            return RotateFlipType.RotateNoneFlipNone;
+        }
+        private Bitmap bitmapBuffer = null;
         private void cam_NewFrame(object sender, NewFrameEventArgs eventArgs)
         {
-            //  Stretch.Alt모드에서 minimized되면 메모리가 계속증가되는 문제 해결
-            if (this.WindowState == FormWindowState.Minimized) return;  
-
+            if (this.WindowState == FormWindowState.Minimized) return;
             firstimage_captured = true;
 
-            /*
-            frame_number_mod++;
-            frame_number_mod %= 2;  // 15Hz
-            //frame_number_mod %= 3;  // 10Hz
-            if (frame_number_mod != 0) return;
-            */
+            var originalFrame = eventArgs.Frame;
+            Rectangle cropRect = GetCropRectangle(originalFrame);
 
-            //lock (lockObject)
+            if (bitmapBuffer == null || bitmapBuffer.Width != cropRect.Width || bitmapBuffer.Height != cropRect.Height)
             {
-
-                //https://stackoverflow.com/questions/9484935/how-to-cut-a-part-of-image-in-c-sharp
-                //var image = (Bitmap)eventArgs.Frame.Clone();
-
-                // 가로세로 비율을 유지하면서 영상 크기를 줄임.
-                cropSize = Math.Max(0,Math.Min(cropSize, Math.Min(eventArgs.Frame.Width / 2, eventArgs.Frame.Height / 2)));
-                float ratio = (float) eventArgs.Frame.Height / eventArgs.Frame.Width;
-                int vcropSize = (int)(cropSize * ratio);
-                var image = (Bitmap)eventArgs.Frame.Clone(new System.Drawing.Rectangle(cropSize, vcropSize, 
-                    eventArgs.Frame.Width - 2*cropSize, eventArgs.Frame.Height - 2*vcropSize), eventArgs.Frame.PixelFormat);
-
-                if (pictureBox1.SizeMode == PictureBoxSizeMode.StretchImage && stretchKeepAspectRatio == true)
-                {
-                    // 가로세로 비율을 유지하면서 Stretch수행  (UniformToFill, Stretch.Alt) 
-                    float ratioImage = (float)eventArgs.Frame.Width / eventArgs.Frame.Height;
-                    float ratioPictureBox = (float)pictureBox1.ClientSize.Width / pictureBox1.ClientSize.Height;
-                    if (ratioImage >= ratioPictureBox)
-                    {
-                        int newWidth = (int)(image.Height * ratioPictureBox);
-                        int wcrop = (int)((image.Width - newWidth) / 2);
-                        image = (Bitmap)image.Clone(new System.Drawing.Rectangle(wcrop, 0, image.Width - 2 * wcrop, image.Height), image.PixelFormat);
-                    }
-                    else
-                    {
-                        int newHeight = (int)(image.Width / ratioPictureBox);
-                        int hcrop = (int)((image.Height - newHeight) / 2);
-                        image = (Bitmap)image.Clone(new System.Drawing.Rectangle(0, hcrop, image.Width, image.Height - 2 * hcrop), image.PixelFormat);
-                    }
-                }
-                else if ((pictureBox1.SizeMode == PictureBoxSizeMode.CenterImage) && (cropSize != 0))
-                {
-                    // PictureBoxSizeMode.CenterImage인 경우 cropping이 발생하면 영상크기가 줄어듬.
-                    // 줄어든 영상을 원본영상크기로 재조정해서 보여주면 윈도우의 크기는 변화되지 않고 영상만 확대되는 느낌이 듦.
-                    image = new Bitmap(image, new System.Drawing.Size(eventArgs.Frame.Width, eventArgs.Frame.Height));
-                }
-
-                if (state_flip_horizontal == true && state_flip_vertical == true)
-                {
-                    image.RotateFlip(RotateFlipType.RotateNoneFlipXY);
-                }
-                else if (state_flip_horizontal == true)
-                {
-                    image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                }
-                else if (state_flip_vertical == true)
-                {
-                    image.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                }
-
-                pictureBox1.Image = image;
-                GC.Collect();
+                bitmapBuffer?.Dispose();
+                bitmapBuffer = new Bitmap(cropRect.Width, cropRect.Height);
             }
+
+            using (Graphics g = Graphics.FromImage(bitmapBuffer))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(originalFrame, new Rectangle(0, 0, bitmapBuffer.Width, bitmapBuffer.Height), cropRect, GraphicsUnit.Pixel);
+            }
+
+            if (state_flip_horizontal || state_flip_vertical)
+            {
+                RotateFlipType flipType = GetFlipType();
+                bitmapBuffer.RotateFlip(flipType);
+            }
+
+            pictureBox1.Invoke((Action)(() =>
+            {
+                pictureBox1.Image?.Dispose();
+                pictureBox1.Image = (Bitmap)bitmapBuffer.Clone();
+            }));
         }
 
         private void closeVideoCaptureDevice()
