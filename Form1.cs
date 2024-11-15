@@ -54,6 +54,47 @@ namespace tCamView
 
         bool stretchKeepAspectRatio = true;  // Alt.Stretch, UniformToFill
 
+        void SaveSettings()
+        {
+            if (WindowState == FormWindowState.Maximized)
+            {
+                Properties.Settings.Default.Maximised = true;
+                Properties.Settings.Default.Minimised = false;
+            }
+            else if (WindowState == FormWindowState.Normal)
+            {
+                Properties.Settings.Default.Maximised = false;
+                Properties.Settings.Default.Minimised = false;
+            }
+            else
+            {
+                Properties.Settings.Default.Maximised = false;
+                Properties.Settings.Default.Minimised = true;
+            }
+
+            Properties.Settings.Default.Location = RestoreBounds.Location;
+            Properties.Settings.Default.Size = RestoreBounds.Size;
+            Properties.Settings.Default.PictureSizeMode = pictureBox1.SizeMode;
+            Properties.Settings.Default.CropImageSize = cropSize;
+            Properties.Settings.Default.Save();
+        }
+
+        void LoadSettings()
+        {
+            if (Properties.Settings.Default.Maximised)
+            {
+                WindowState = FormWindowState.Maximized;
+            }
+            else if (Properties.Settings.Default.Minimised)
+            {
+                WindowState = FormWindowState.Minimized;
+            }
+
+            Location = Properties.Settings.Default.Location;
+            Size = Properties.Settings.Default.Size;
+            pictureBox1.SizeMode = Properties.Settings.Default.PictureSizeMode;
+            cropSize = Properties.Settings.Default.CropImageSize;
+        }
         public Form1()
         {
             InitializeComponent();
@@ -116,7 +157,7 @@ namespace tCamView
 
             // Update the Checked mark...
             UpdateMenuItemsChecked();
-
+            LoadSettings();
             // Always on Top
             this.TopMost = true;
         }
@@ -488,11 +529,27 @@ namespace tCamView
                 bitmapBuffer.RotateFlip(flipType);
             }
 
-            pictureBox1.Invoke((Action)(() =>
+            try
             {
-                pictureBox1.Image?.Dispose();
-                pictureBox1.Image = (Bitmap)bitmapBuffer.Clone();
-            }));
+                pictureBox1.Invoke((Action)(() =>
+                {
+                    if (CanDraw())
+                    {
+                        pictureBox1.Image?.Dispose();
+                        pictureBox1.Image = (Bitmap)bitmapBuffer.Clone();
+                    }
+                }));
+            }
+            catch (Exception e)
+            {
+              
+            }
+            
+        }
+
+        bool CanDraw()
+        {
+            return !this.IsDisposed && !pictureBox1.IsDisposed;
         }
 
         private void closeVideoCaptureDevice()
@@ -508,18 +565,14 @@ namespace tCamView
                         break;
                     System.Threading.Thread.Sleep(100);
                 }
-
-                if (cam.IsRunning)
-                {
-                    cam.Stop();
-                }
-
+                cam.NewFrame -= cam_NewFrame;
                 cam = null;
             }
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            SaveSettings();
             closeVideoCaptureDevice();
         }
 
