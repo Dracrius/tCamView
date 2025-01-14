@@ -678,7 +678,7 @@ namespace tCamView
         private void MenuItem_Borderless_Rectangle_Click(object sender, EventArgs e)
         {
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 0, 0));
+            Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 16, 16));
             currMenuItem3WindowStyles = 2;
             UpdateMenuItemsChecked();
         }
@@ -762,7 +762,7 @@ namespace tCamView
             }
             else if (currMenuItem3WindowStyles == 2) // Borderless_Rectangle
             {
-                Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 0, 0));
+                Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 16, 16));
             }
             else if (currMenuItem3WindowStyles == 3) // Borderless_RoundedRectangle
             {
@@ -782,7 +782,7 @@ namespace tCamView
             }
             else if (currMenuItem3WindowStyles == 2) // Borderless_Rectangle
             {
-                Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 0, 0));
+                Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 16, 16));
             }
             else if (currMenuItem3WindowStyles == 3) // Borderless_RoundedRectangle
             {
